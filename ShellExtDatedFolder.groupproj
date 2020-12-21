@@ -1,0 +1,72 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{C25CEB5E-8AD5-4CD2-B778-5B7FD4C91765}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="JLDelphi\JumpListDelphiProj.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="JLCPP\JumpListCppProj.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="TDDelphi\ToDoFileDelphi.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="TDDelphi\ToDoShllDelphi.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="JumpListDelphiProj">
+        <MSBuild Projects="JLDelphi\JumpListDelphiProj.dproj"/>
+    </Target>
+    <Target Name="JumpListDelphiProj:Clean">
+        <MSBuild Projects="JLDelphi\JumpListDelphiProj.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="JumpListDelphiProj:Make">
+        <MSBuild Projects="JLDelphi\JumpListDelphiProj.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="JumpListCppProj">
+        <MSBuild Projects="JLCPP\JumpListCppProj.cbproj"/>
+    </Target>
+    <Target Name="JumpListCppProj:Clean">
+        <MSBuild Projects="JLCPP\JumpListCppProj.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="JumpListCppProj:Make">
+        <MSBuild Projects="JLCPP\JumpListCppProj.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="ToDoFileDelphi">
+        <MSBuild Projects="TDDelphi\ToDoFileDelphi.dproj"/>
+    </Target>
+    <Target Name="ToDoFileDelphi:Clean">
+        <MSBuild Projects="TDDelphi\ToDoFileDelphi.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ToDoFileDelphi:Make">
+        <MSBuild Projects="TDDelphi\ToDoFileDelphi.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ToDoShllDelphi">
+        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj"/>
+    </Target>
+    <Target Name="ToDoShllDelphi:Clean">
+        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ToDoShllDelphi:Make">
+        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="JumpListDelphiProj;JumpListCppProj;ToDoFileDelphi;ToDoShllDelphi"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="JumpListDelphiProj:Clean;JumpListCppProj:Clean;ToDoFileDelphi:Clean;ToDoShllDelphi:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="JumpListDelphiProj:Make;JumpListCppProj:Make;ToDoFileDelphi:Make;ToDoShllDelphi:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
