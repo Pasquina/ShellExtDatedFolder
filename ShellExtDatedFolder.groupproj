@@ -15,6 +15,9 @@
         <Projects Include="TDDelphi\ToDoShllDelphi.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="ZNewFolder\ZNewFolder.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -59,14 +62,23 @@
     <Target Name="ToDoShllDelphi:Make">
         <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj" Targets="Make"/>
     </Target>
+    <Target Name="ZNewFolder">
+        <MSBuild Projects="ZNewFolder\ZNewFolder.dproj"/>
+    </Target>
+    <Target Name="ZNewFolder:Clean">
+        <MSBuild Projects="ZNewFolder\ZNewFolder.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ZNewFolder:Make">
+        <MSBuild Projects="ZNewFolder\ZNewFolder.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="JumpListDelphiProj;JumpListCppProj;ToDoFileDelphi;ToDoShllDelphi"/>
+        <CallTarget Targets="JumpListDelphiProj;JumpListCppProj;ToDoFileDelphi;ToDoShllDelphi;ZNewFolder"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="JumpListDelphiProj:Clean;JumpListCppProj:Clean;ToDoFileDelphi:Clean;ToDoShllDelphi:Clean"/>
+        <CallTarget Targets="JumpListDelphiProj:Clean;JumpListCppProj:Clean;ToDoFileDelphi:Clean;ToDoShllDelphi:Clean;ZNewFolder:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="JumpListDelphiProj:Make;JumpListCppProj:Make;ToDoFileDelphi:Make;ToDoShllDelphi:Make"/>
+        <CallTarget Targets="JumpListDelphiProj:Make;JumpListCppProj:Make;ToDoFileDelphi:Make;ToDoShllDelphi:Make;ZNewFolder:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

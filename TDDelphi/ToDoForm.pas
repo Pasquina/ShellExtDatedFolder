@@ -8,13 +8,16 @@ uses
 
 type
   TToDoFileForm = class(TForm)
-    Splitter1: TSplitter;
-    Panel1: TPanel;
-    DBNavigator1: TDBNavigator;
-    DBMemo1: TDBMemo;
-    DataSource1: TDataSource;
-    DBGrid1: TDBGrid;
+    pnToDo: TPanel;
+    dbnToDo: TDBNavigator;
+    dbmFileRemarks: TDBMemo;
+    dsTodo: TDataSource;
+    dbgToDo: TDBGrid;
     cdsTodo: TClientDataSet;
+    cdsTodoFilename: TStringField;
+    cdsTodoNotes: TMemoField;
+    GridPanel1: TGridPanel;
+    fpToDoNav: TFlowPanel;
     procedure FormCreate(Sender: TObject);
     procedure cdsTodoBeforeOpen(DataSet: TDataSet);
   private
@@ -39,60 +42,57 @@ uses
 
 procedure TToDoFileForm.FormCreate(Sender: TObject);
 begin
-  cdsTodo.Open;                                       // Open the ToDoDataset
-  DragAcceptFiles(Handle, True);                      // Inform the Shell we accept File Drops
+  cdsTodo.Open;                                        // Open the ToDoDataset
+  DragAcceptFiles(Handle, True);                       // Inform the Shell we accept File Drops
 end;
 
 { Set up the Client Dataset Save/Restore mechanism before continuing }
 
 function TToDoFileForm.GetToDoFileName: String;
 const
-  LVendorName: String = 'Embarcadero';                // Vendor of code
-  LAppName: String = 'ToDoList';                      // application name
-  LDatabaseFileName: String = 'ToDoList.cds';         // file name
+  LVendorName: String = 'Embarcadero';                 // Vendor of code
+  LAppName: String = 'ToDoList';                       // application name
+  LDatabaseFileName: String = 'ToDoList.cds';          // file name
 var
-  LPath: String;                                      // Path to Client Dataset File
+  LPath: String;                                       // Path to Client Dataset File
 begin
-  Result := '';                                       // make sure we don't have a path and file yet
+  Result := '';                                        // make sure we don't have a path and file yet
   LPath := TPath.Combine(TPath.Combine(TPath.GetCachePath, LVendorName), LAppName); // create the path
-  if ForceDirectories(LPath) then                     // make certain the directories exist
-    Result := TPath.Combine(LPath, LDatabaseFileName) // return the full path and filename
+  if ForceDirectories(LPath) then                      // make certain the directories exist
+    Result := TPath.Combine(LPath, LDatabaseFileName)  // return the full path and filename
   else
   begin
     ShowMessage('Unable to create' + sLineBreak + LPath + sLineBreak + 'Execution cannot continue.');
-    Application.Terminate;                            // must terminate if can't save the database
+    Application.Terminate;                             // must terminate if can't save the database
   end;
 end;
 
-{ Handle one or more files being dropped directly on the ToDoFIle form  }
+{ Handle one or more files being dropped directly on the ToDoFIle form }
 
 procedure TToDoFileForm.DropFiles(var AWmDropFiles: TWmDropFiles);
 var
-  LFileCount: Integer;
-  LIx: Integer;
-  Filename: string;
+  LFileCount: Integer;                                 // number of files the user dropped
+  LIx: Integer;                                        // Index through the list of dropped files
+  LFileNameLength: Cardinal;                           // character count of current file name plus null character
+  LFileName: String;                                   // filename string retrieved from Shell
+  LState: TDataSetState;
 begin
-  awmdROPfILES.
-  LFileCount := DragQueryFile(AWmDropFiles.Drop, $FFFFFFFF, nil, 0);  // get file count
+  LFileCount := DragQueryFile(AWmDropFiles.Drop, High(NativeUInt), nil, 0); // get file count
   try
-    for LIx := 0 to LFileCount - 1 do
+    for LIx := 0 to LFileCount - 1 do                  // process all dropped files
     begin
-      // allocate memory
-      SetLength(Filename, 80);
-      // read the file name
-      DragQueryFile(AWmDropFiles.Drop, LIx, PChar(Filename), 80);
-      // normalize file
-      Filename := PChar(Filename);
-      // add a new record
-      cdsTodo.InsertRecord([Filename, '']);
+      LFileNameLength := DragQueryFile(AWmDropFiles.Drop, LIx, nil, 0) + 1; // get filename length
+      SetLength(LFileName, LFileNameLength);           // allocate space to receive name
+      DragQueryFile(AWmDropFiles.Drop, LIx, PChar(LFileName), LFileNameLength); // return the name
+      cdsTodo.AppendRecord([LFileName, '']);           // add filename to end of database
     end;
   finally
-    DragFinish(AWmDropFiles.Drop);
+    DragFinish(AWmDropFiles.Drop);                     // Release resources from the drag and drop
   end;
-  // open the (last) record in edit mode
-  cdsTodo.Edit;
-  // move the input focus to the memo
-  DBMemo1.SetFocus;
+  Application.Restore;                                 // after much experimentation this seems to
+  Application.BringToFront;                            // be the only way to set the focus on
+  ToDoFileForm.SetFocus;                               // the memo field after adding entries
+  ToDoFileForm.ActiveControl := dbmFileRemarks;        // since it loses focus in order to do the drag and drop
 end;
 
 { Initialize the external file save mechanism }
@@ -119,7 +119,7 @@ begin
   // set up the file name
   cdsTodo.FieldByName('Filename').AsString := Filename;
   // move the input focus to the memo
-  DBMemo1.SetFocus;
+  dbmFileRemarks.SetFocus;
 end;
 
 end.
