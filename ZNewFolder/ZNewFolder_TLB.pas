@@ -12,7 +12,7 @@ unit ZNewFolder_TLB;
 // ************************************************************************ //
 
 // $Rev: 98336 $
-// File generated on 1/5/2021 4:37:52 PM from Type Library described below.
+// File generated on 1/6/2021 8:51:15 PM from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\Users\VydarenyM\Documents\Projects\Commercial\ShellExtDatedFolder\ZNewFolder\ZNewFolder (1)

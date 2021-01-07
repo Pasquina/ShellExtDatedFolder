@@ -40,6 +40,8 @@ type
 
   end;
 
+  { Extend the REGSVR routines to include context menu Registry entries }
+
   TZNewFolderExtFactory = class(TComObjectFactory)
   public
     procedure UpdateRegistry(Register: Boolean); override;
@@ -89,7 +91,6 @@ function TZNewFolderExt.Initialize(pidlFolder: PItemIDList; lpdobj: IDataObject;
 const
   LFilenameMax: Integer = 2000;              // maximum character count for returned path/file name
 var
-  LResult: HRESULT;                          // local result storage a la MS APIs
   LFileName: String;                         // local variable to receive string from API
 begin
 
@@ -114,7 +115,7 @@ begin
 
   SetLength(LFileName, LFilenameMax);        // set buffer length
   SHGetPathFromIDListEx(pidlFolder, PChar(LFileName), LFilenameMax, GPFIDL_DEFAULT); // obtain path/name
-  SelectedFile := PChar(LFileName);          // save path/name as propeerty
+  SelectedFile := PChar(LFileName);          // save path/name as property
 
   { Note: lpdobj is not captured. It represents the folder contents, that we aren't interested in. }
 
@@ -135,10 +136,10 @@ begin
   LDateStamp := FormatDateTime('yyyy-mm-dd', Now(), LFormatSettings); // format current date
   LDirectory := TPath.Combine(SelectedFile, 'Zilch-' + LDateStamp); // build the completed directory name
   LResult := CreateDirectory(PWideChar(LDirectory), Nil); // create the directory
-  if LResult <> False then
-    Result := SEVERITY_SUCCESS
-  else
-    Result := SEVERITY_ERROR;
+  if LResult <> False then                   // aggravatingly the return from CreateDirectory
+    Result := SEVERITY_SUCCESS               // is not compatible with the return
+  else                                       // expected by this method
+    Result := SEVERITY_ERROR;                // this makes the translation
 end;
 
 { This simply adds a menu item to the context menu. The user may select the item to invoke the desired behavior. }
@@ -196,17 +197,25 @@ end;
 
 { TZNewFolderExtFactory }
 
+{ Besides the Registry entries requirerd by COM, Shell menu extensions require some
+  additional entries that control the display of menu items and invocation of the COM
+  interfaced routines. TZNewFolderExtFactory descends from TCOMObjectFactory to add
+  the necessary code to update the Registry. It starts off by invoking the parent
+  method to take care of routine COM registration and then registers three new
+  keys for the Context Menu operations.
+}
+
 procedure TZNewFolderExtFactory.UpdateRegistry(Register: Boolean);
 var
   LRegistry: TRegistry; // system registry access
 begin
-  inherited;
+  inherited;            // do the routine Registry stuff for COM
 
   LRegistry := TRegistry.Create;
   try
     LRegistry.RootKey := HKEY_CLASSES_ROOT;
-    if Register then
-    begin
+    if Register then    // boolean value set by REGSVR32 parameter
+    begin               // register new keys and values
       if LRegistry.OpenKey('\Directory\shellex\ContextMenuHandlers\ZilchFolder', True) then
         LRegistry.WriteString('', GUIDToString(CLASS_ZNewFolderExt));
       if LRegistry.OpenKey('\Directory\Background\shellex\ContextMenuHandlers\ZilchFolder', True) then
@@ -214,8 +223,8 @@ begin
       if LRegistry.OpenKey('\Folder\shellex\ContextMenuHandlers\ZilchFolder', True) then
         LRegistry.WriteString('', GUIDToString(CLASS_ZNewFolderExt));
     end
-    else
-    begin
+    else                // unregister requested in REGSVR32
+    begin               // remove context menu keys and values
       if LRegistry.OpenKey('\Directory\shellex\ContextMenuHandlers\ZilchFolder', False) then
         LRegistry.DeleteKey('\Directory\shellex\ContextMenuHandlers\ZilchFolder');
       if LRegistry.OpenKey('\Directory\Background\shellex\ContextMenuHandlers\ZilchFolder', False) then

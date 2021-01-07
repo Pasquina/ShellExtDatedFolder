@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>2020/12/20 20:12:36.000.820,C:\Users\VydarenyM\Documents\Projects\Commercial\ShellExtDatedFolder\ShellExtDatedFolder.groupproj=C:\Users\VydarenyM\Documents\Projects\ProjectGroup1.groupproj</Transaction>
+    <Transaction>2020/12/20 20:12:36.000.820,C:\Users\VydarenyM\Documents\Projects\ProjectGroup1.groupproj=C:\Users\VydarenyM\Documents\Projects\Commercial\ShellExtDatedFolder\ShellExtDatedFolder.groupproj</Transaction>
   </Transactions>
 	<Default.Personality>
 		<Projects ActiveProject="C:\Users\VydarenyM\Documents\Projects\Commercial\ShellExtDatedFolder\ZNewFolder\ZNewFolder.dproj"/>
