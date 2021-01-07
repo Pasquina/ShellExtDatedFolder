@@ -12,10 +12,10 @@
         <Projects Include="TDDelphi\ToDoFileDelphi.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="TDDelphi\ToDoShllDelphi.dproj">
+        <Projects Include="ZNewFolder\ZNewFolder.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="ZNewFolder\ZNewFolder.dproj">
+        <Projects Include="TDDelphi\ToDoShllDelphi.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -53,15 +53,6 @@
     <Target Name="ToDoFileDelphi:Make">
         <MSBuild Projects="TDDelphi\ToDoFileDelphi.dproj" Targets="Make"/>
     </Target>
-    <Target Name="ToDoShllDelphi">
-        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj"/>
-    </Target>
-    <Target Name="ToDoShllDelphi:Clean">
-        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="ToDoShllDelphi:Make">
-        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj" Targets="Make"/>
-    </Target>
     <Target Name="ZNewFolder">
         <MSBuild Projects="ZNewFolder\ZNewFolder.dproj"/>
     </Target>
@@ -71,14 +62,23 @@
     <Target Name="ZNewFolder:Make">
         <MSBuild Projects="ZNewFolder\ZNewFolder.dproj" Targets="Make"/>
     </Target>
+    <Target Name="ToDoShllDelphi">
+        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj"/>
+    </Target>
+    <Target Name="ToDoShllDelphi:Clean">
+        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ToDoShllDelphi:Make">
+        <MSBuild Projects="TDDelphi\ToDoShllDelphi.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="JumpListDelphiProj;JumpListCppProj;ToDoFileDelphi;ToDoShllDelphi;ZNewFolder"/>
+        <CallTarget Targets="JumpListDelphiProj;JumpListCppProj;ToDoFileDelphi;ZNewFolder;ToDoShllDelphi"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="JumpListDelphiProj:Clean;JumpListCppProj:Clean;ToDoFileDelphi:Clean;ToDoShllDelphi:Clean;ZNewFolder:Clean"/>
+        <CallTarget Targets="JumpListDelphiProj:Clean;JumpListCppProj:Clean;ToDoFileDelphi:Clean;ZNewFolder:Clean;ToDoShllDelphi:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="JumpListDelphiProj:Make;JumpListCppProj:Make;ToDoFileDelphi:Make;ToDoShllDelphi:Make;ZNewFolder:Make"/>
+        <CallTarget Targets="JumpListDelphiProj:Make;JumpListCppProj:Make;ToDoFileDelphi:Make;ZNewFolder:Make;ToDoShllDelphi:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

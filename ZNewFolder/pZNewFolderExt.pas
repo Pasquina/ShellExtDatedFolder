@@ -5,17 +5,29 @@ unit pZNewFolderExt;
 interface
 
 uses
-  Windows, ActiveX, Classes, ComObj, ShlObj, ShellAPI, ZNewFolder_TLB, StdVcl,
-  System.SysUtils, ANSIStrings, Registry;
+  Windows, ActiveX, Classes, ComObj, WinAPI.ShlObj, ShellAPI, ZNewFolder_TLB, StdVcl,
+  System.SysUtils, System.IOUtils, ANSIStrings, Registry;
 
 type
   TZNewFolderExt = class(TTypedComObject, IZNewFolderExt, IContextMenu, IShellExtInit)
   private
     FSelectedFile: String;
     FIDCmdDatedFolder: UInt;
+    FObjectCount: Integer;
+    FN_hkeyProgID: HKEY;
+    FN_pidlFolder: PIDLIST_ABSOLUTE;
+    FN_lpdObj: IDataObject;
     procedure SetSelectedFile(const Value: String);
     procedure SetIDCmdDatedFolder(const Value: UInt);
+    procedure SetObjectCount(const Value: Integer);
+    procedure SetN_hkeyProgID(const Value: HKEY);
+    procedure SetN_lpdObj(const Value: IDataObject);
+    procedure SetN_pidlFolder(const Value: PIDLIST_ABSOLUTE);
   protected
+    property N_pidlFolder: PIDLIST_ABSOLUTE read FN_pidlFolder write SetN_pidlFolder;
+    property N_lpdObj: IDataObject read FN_lpdObj write SetN_lpdObj;
+    property N_hkeyProgID: HKEY read FN_hkeyProgID write SetN_hkeyProgID;
+    property ObjectCount: Integer read FObjectCount write SetObjectCount;
     property SelectedFile: String read FSelectedFile write SetSelectedFile;
     property IDCmdDatedFolder: UInt read FIDCmdDatedFolder write SetIDCmdDatedFolder;
     // function IShellExtInit.Initialize = InitializeLocal;
@@ -28,9 +40,9 @@ type
 
   end;
 
-  TZNewFolderExtFactory = class (TComObjectFactory)
+  TZNewFolderExtFactory = class(TComObjectFactory)
   public
-    procedure UpdateRegistry (Register: Boolean); override;
+    procedure UpdateRegistry(Register: Boolean); override;
   end;
 
 implementation
@@ -58,7 +70,7 @@ begin
   case uType of
     GCS_HELPTEXTA:                           // request is for ANSI help text
       begin
-        System.AnsiStrings.StrLCopy(pszName, @LHelpMsgA, cchMax); // return ANSI help text up to max allowed
+        System.ANSIStrings.StrLCopy(pszName, @LHelpMsgA, cchMax); // return ANSI help text up to max allowed
         Result := SEVERITY_SUCCESS;          // help text returned successfully
       end;
     GCS_HELPTEXTW:                           // request is for wide string help text
@@ -71,75 +83,110 @@ begin
   end;
 end;
 
-{ Initialization obtains the name of the parent folder into which the new folder
-  will be placed. }
+{ Initialization saves the parameters provided by the shell for later use. }
 
 function TZNewFolderExt.Initialize(pidlFolder: PItemIDList; lpdobj: IDataObject; hkeyProgID: HKEY): HRESULT;
-
+const
+  LFilenameMax: Integer = 2000;              // maximum character count for returned path/file name
 var
-  LStgMedium: TStgMedium;
-  LFormatEtc: TFormatEtc;                    // structure describing generalized clipboard format
   LResult: HRESULT;                          // local result storage a la MS APIs
-  LFileNameLength: Cardinal;                 // character count of current file name plus null character
+  LFileName: String;                         // local variable to receive string from API
 begin
-  IDCmdDatedFolder := High(UInt);            // Indicate no ID assigned yet
+
+  IDCmdDatedFolder := High(UInt);            // Indicate no menu item ID assigned yet
   Result := E_FAIL;                          // initialize default result
 
-  if not Assigned(lpdobj) then               // is data object assigned
-    Exit(E_FAIL);                            // not assigned; init fails
+  { Multiple invocations are possible. Clean house first to return resources. }
 
-  { Initializing the FormatEtc structure is required in order to convert the IDataObject content to
-    a format usable by DragQueryFile to extract individual file names. }
+  CoTaskMemFree(N_pidlFolder);               // return idlFolder (if null, function does nothing)
+  N_pidlFolder := nil;                       // mark not assigned
 
-  with LFormatEtc do                         // set up clipboard format
+  if Assigned(N_lpdObj) then                 // if data object assigned
+    N_lpdObj._Release();                     // decrement the reference count
+
+  if N_hkeyProgID <> 0 then                  // if the Prog ID key is there
   begin
-    cfFormat := CF_HDROP;                    // predefined format can be used as input to DragQueryFile
-    ptd := nil;                              // pointer to target device not required in this case
-    dwAspect := DVASPECT_CONTENT;            // representation of an object to be displayed inside a container
-    lindex := -1;                            // currently not used and must be -1
-    tymed := TYMED_HGLOBAL;                  // specifies global memory handle for data transfer
+    RegCloseKey(N_hkeyProgID);               // close the key first
+    N_hkeyProgID := 0;                       // mark key not assigned
   end;
 
-  { Now transform the DataObject to a Storage LStgMedium structure }
+  { Now save the input values for later use }
 
-  LResult := lpdobj.GetData(LFormatEtc, LStgMedium);
+  SetLength(LFileName, LFilenameMax);        // set buffer length
+  SHGetPathFromIDListEx(pidlFolder, PChar(LFileName), LFilenameMax, GPFIDL_DEFAULT); // obtain path/name
+  SelectedFile := PChar(LFileName);          // save path/name as propeerty
 
-  if Failed(LResult) then                    // test for successful conversion
-    Exit(E_FAIL);                            // exit if conversion failed
+  { Note: lpdobj is not captured. It represents the folder contents, that we aren't interested in. }
 
-  { A maximum of one object is supported. Greater than that is a fail. }
-
-  if DragQueryFile(LStgMedium.hGlobal, High(Cardinal), nil, 0) <> 1 then // return value is number of objects
-    Exit(E_FAIL);                            // exit if anything except 1 file returned
-
-  LFileNameLength := DragQueryFile(LStgMedium.hGlobal, 0, nil, 0) + 1; // get filename length
-  SetLength(FSelectedFile, LFileNameLength); // allocate space to receive name
-  DragQueryFile(LStgMedium.hGlobal, 0, PChar(FSelectedFile), LFileNameLength); // return the name
-
-  ReleaseStgMedium(LStgMedium);              // release resources not needed
+  { Note: hKeyProgID is not required or used so to avoid the overhead of opening a key
+    it is simply ignored in this code. }
 
   Result := NOERROR;                         // success
 end;
 
 function TZNewFolderExt.InvokeCommand(var lpici: TCMInvokeCommandInfo): HRESULT;
+var
+  LFormatSettings: TFormatSettings;          // to make this thread safe
+  LDateStamp: String;                        // formatted datestamp
+  LDirectory: String;                        // final directory string
+  LResult: LongBool;                         // more defnition fuckery; 0 ordinality is false anything else is true
 begin
-  ShowMessage(SelectedFile);
-  Result := NOERROR;
+  LFormatSettings := TFormatSettings.Create; // obtain local copy of format settings
+  LDateStamp := FormatDateTime('yyyy-mm-dd', Now(), LFormatSettings); // format current date
+  LDirectory := TPath.Combine(SelectedFile, 'Zilch-' + LDateStamp); // build the completed directory name
+  LResult := CreateDirectory(PWideChar(LDirectory), Nil); // create the directory
+  if LResult <> False then
+    Result := SEVERITY_SUCCESS
+  else
+    Result := SEVERITY_ERROR;
 end;
 
 { This simply adds a menu item to the context menu. The user may select the item to invoke the desired behavior. }
 
 function TZNewFolderExt.QueryContextMenu(Menu: HMENU; indexMenu, idCmdFirst, idCmdLast, uFlags: UInt): HRESULT;
 begin
+
+  { Note there are two things working here:
+    1.  The indexMenu has the POSITION at which the menu item can be inserted into the menu. It is a zero-based item
+    position.
+    2.  The idCmdFirst and idCmdLast control the assignment of an IDENTIFIER to the menu item. This NOT the same as
+    the POSITION, and has no relationship with it. IDENTIFIER OFFSETS should be stashed for later use by the system.
+  }
+
+  if SelectedFile = '' then
+    Exit(NOERROR);
+
+  IDCmdDatedFolder := idCmdFirst - idCmdFirst; // stash the command ID OFFSET for later reference
   if InsertMenu(Menu, indexMenu, MF_STRING or MF_BYPOSITION, idCmdFirst, 'Zilch Dated Folder') then
-    Result := MAKERESULT(SEVERITY_SUCCESS, 0, idCmdFirst - idCmdFirst + 1) // return success and new offset
+    Result := MAKERESULT(SEVERITY_SUCCESS, 0, idCmdFirst - idCmdFirst + 1) // return success and command id offset
   else
-    Result := HRESULT(SEVERITY_ERROR); // return error
+    Result := HRESULT(SEVERITY_ERROR);         // return error
+
 end;
 
 procedure TZNewFolderExt.SetIDCmdDatedFolder(const Value: UInt);
 begin
   FIDCmdDatedFolder := Value;
+end;
+
+procedure TZNewFolderExt.SetN_hkeyProgID(const Value: HKEY);
+begin
+  FN_hkeyProgID := Value;
+end;
+
+procedure TZNewFolderExt.SetN_lpdObj(const Value: IDataObject);
+begin
+  FN_lpdObj := Value;
+end;
+
+procedure TZNewFolderExt.SetN_pidlFolder(const Value: PIDLIST_ABSOLUTE);
+begin
+  FN_pidlFolder := Value;
+end;
+
+procedure TZNewFolderExt.SetObjectCount(const Value: Integer);
+begin
+  FObjectCount := Value;
 end;
 
 procedure TZNewFolderExt.SetSelectedFile(const Value: String);
@@ -164,6 +211,8 @@ begin
         LRegistry.WriteString('', GUIDToString(CLASS_ZNewFolderExt));
       if LRegistry.OpenKey('\Directory\Background\shellex\ContextMenuHandlers\ZilchFolder', True) then
         LRegistry.WriteString('', GUIDToString(CLASS_ZNewFolderExt));
+      if LRegistry.OpenKey('\Folder\shellex\ContextMenuHandlers\ZilchFolder', True) then
+        LRegistry.WriteString('', GUIDToString(CLASS_ZNewFolderExt));
     end
     else
     begin
@@ -171,6 +220,8 @@ begin
         LRegistry.DeleteKey('\Directory\shellex\ContextMenuHandlers\ZilchFolder');
       if LRegistry.OpenKey('\Directory\Background\shellex\ContextMenuHandlers\ZilchFolder', False) then
         LRegistry.DeleteKey('\Directory\Background\shellex\ContextMenuHandlers\ZilchFolder');
+      if LRegistry.OpenKey('\Folder\shellex\ContextMenuHandlers\ZilchFolder', False) then
+        LRegistry.DeleteKey('\Folder\shellex\ContextMenuHandlers\ZilchFolder');
     end;
   finally
     LRegistry.CloseKey;
@@ -181,7 +232,7 @@ end;
 
 initialization
 
-TZNewFolderExtFactory.Create(ComServer, TZNewFolderExt, Class_ZNewFolderExt,
-  'ZNewFolderExt', 'Create Zilch Dated Folder', ciMultiInstance, tmApartment);
+TZNewFolderExtFactory.Create(ComServer, TZNewFolderExt, CLASS_ZNewFolderExt, 'ZNewFolderExt',
+  'Create Zilch Dated Folder', ciMultiInstance, tmApartment);
 
 end.
