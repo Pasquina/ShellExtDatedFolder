@@ -48,7 +48,7 @@ An additional class, `TZNewFolderExtFactory`, was also added that descends from 
 
 In all cases, installation may require elevated authorization. Running as `Administrator`, either when using the `cmd` window or the installation file should be sufficient to achieve correct installation.
 
-Installation can be manually achieved by copying the ZNewFolder.dll to an appropriate folder and then using RegSvr32.exe (a Microsoft program) to register the COM server. The registration process handles all necessary System Registry modifications. RegSvr32 can also be used to uninstall the Com server using the -u switch. To install using this method you must first compile the project to obtain the COM Server .dll having the correctd bitness. (See **Important Caveats** below.)
+Installation can be manually achieved by copying the ZNewFolder.dll to an appropriate folder and then using RegSvr32.exe (a Microsoft program) to register the COM server. The registration process handles all necessary System Registry modifications. RegSvr32 can also be used to uninstall the Com server using the -u switch. To install using this method you must first compile the project to obtain the COM Server .dll having the correct bitness. (See **Important Caveats** below.)
 
 Also included is an installation file created using `DeployMaster`, an inexpensive installation package builder available from the [`DeployMaster` website](http://deploymaster.com "Deploymaster Website"). `Deploymaster` also provides an uninstall function. The installer is in the `Installer` folder. It will install either the 32-bit or 64-bit version as appropriate. (But see **Important Caveats** below for additional information.) 
 
